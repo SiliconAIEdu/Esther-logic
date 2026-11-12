@@ -82,6 +82,7 @@ const gameDialog = $("#gameDialog");
 const labDialog = $("#labDialog");
 let labAwarded = false;
 let escapeState;
+let programState;
 let sortState;
 let nimState;
 
@@ -206,8 +207,9 @@ function nextQuestion() {
 
 const LAB_META = {
   escape: { kicker: "策略实验 01 · 空间规划", title: "探测车出舱", hint: "先别急着动红车。把挡在同一行的两辆竖向车都移到红车下方，再向出口前进。" },
-  sort: { kicker: "策略实验 02 · 条件分类", title: "双圈分类站", hint: "逐个问两个问题：它是偶数吗？它是 3 的倍数吗？两个答案的组合决定位置。" },
-  nim: { kicker: "策略实验 03 · 逆向思考", title: "最后的能量石", hint: "从结尾倒着想：如果能让机器人面对 4、8、12 颗，你就能控制之后的节奏。" }
+  program: { kicker: "策略实验 02 · 动态编程", title: "编程探测车", hint: "先规划到第一颗能量星：前进、右转、前进、左转、前进、右转。之后沿横向通道前进。" },
+  sort: { kicker: "策略实验 03 · 条件分类", title: "双圈分类站", hint: "逐个问两个问题：它是偶数吗？它是 3 的倍数吗？两个答案的组合决定位置。" },
+  nim: { kicker: "策略实验 04 · 逆向思考", title: "最后的能量石", hint: "从结尾倒着想：如果能让机器人面对 4、8、12 颗，你就能控制之后的节奏。" }
 };
 
 function openLab(type) {
@@ -223,6 +225,7 @@ function openLab(type) {
 function resetLab() {
   $("#labStatus").textContent = "观察规则，然后开始尝试。";
   if (state.currentLab === "escape") resetEscape();
+  if (state.currentLab === "program") resetProgram();
   if (state.currentLab === "sort") resetSort();
   if (state.currentLab === "nim") resetNim();
 }
@@ -292,6 +295,116 @@ function moveSelectedVehicle(delta) {
     $("#labStatus").textContent = `已移动 ${vehicle.label}。现在重新观察：红车前方还剩哪些障碍？`;
   }
   renderEscape();
+}
+
+const PROGRAM_ROCKS = new Set(["2,0", "3,2", "1,1", "1,3", "3,4"]);
+const PROGRAM_ENERGY = new Set(["2,2", "1,4"]);
+const PROGRAM_LABELS = { F: "↑ 前进", L: "↶ 左转", R: "↷ 右转" };
+
+function resetProgram() {
+  programState = {
+    queue: [],
+    robot: { row: 4, col: 0, dir: 0 },
+    collected: new Set(),
+    running: false,
+    version: Date.now()
+  };
+  renderProgram();
+}
+
+function renderProgram() {
+  const cells = Array.from({ length: 25 }, (_, index) => {
+    const row = Math.floor(index / 5);
+    const col = index % 5;
+    const key = `${row},${col}`;
+    const classes = ["program-cell"];
+    if (PROGRAM_ROCKS.has(key)) classes.push("rock");
+    if (PROGRAM_ENERGY.has(key)) classes.push("energy");
+    if (programState.collected.has(key)) classes.push("collected");
+    if (key === "0,4") classes.push("goal");
+    return `<span class="${classes.join(" ")}" data-cell="${key}"></span>`;
+  }).join("");
+  const queue = programState.queue.length ? programState.queue.map((command, index) => `<i class="command-block" data-step="${index}">${PROGRAM_LABELS[command]}</i>`).join("") : '<span class="command-placeholder">点击上方指令，把程序排在这里</span>';
+  $("#labGameArea").innerHTML = `<div class="program-layout"><div class="program-board">${cells}<i id="programRobot" class="program-robot" style="--row:${programState.robot.row};--col:${programState.robot.col};--dir:${programState.robot.dir}" aria-label="探测车"></i></div><div class="program-panel"><h4>给探测车编一段程序</h4><p>收集两颗能量星，再到达右上角终点。岩石不能穿过，最多使用 14 条指令。</p><div class="command-palette">${Object.entries(PROGRAM_LABELS).map(([command, label]) => `<button type="button" data-command="${command}" ${programState.running || programState.queue.length >= 14 ? "disabled" : ""}>${label}</button>`).join("")}</div><div class="command-queue">${queue}</div><div class="program-actions"><button type="button" id="removeCommand" ${programState.running || !programState.queue.length ? "disabled" : ""}>撤回</button><button type="button" id="clearProgram" ${programState.running || !programState.queue.length ? "disabled" : ""}>清空</button><button type="button" id="runProgram" class="run-program" ${programState.running || !programState.queue.length ? "disabled" : ""}>▶ 运行程序</button></div><div class="program-stats"><span>${programState.queue.length} / 14 条指令</span><span>已收集 ${programState.collected.size} / 2</span></div></div></div>`;
+  $$("[data-command]").forEach((button) => button.addEventListener("click", () => addProgramCommand(button.dataset.command)));
+  $("#removeCommand").addEventListener("click", () => { programState.queue.pop(); renderProgram(); });
+  $("#clearProgram").addEventListener("click", () => { programState.queue = []; renderProgram(); });
+  $("#runProgram").addEventListener("click", runProgram);
+}
+
+function addProgramCommand(command) {
+  if (programState.running || programState.queue.length >= 14) return;
+  programState.queue.push(command);
+  $("#labStatus").textContent = `已加入“${PROGRAM_LABELS[command]}”。排好后点击运行，观察每一步。`;
+  renderProgram();
+}
+
+function programDelay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function runProgram() {
+  if (programState.running || !programState.queue.length) return;
+  programState.running = true;
+  programState.robot = { row: 4, col: 0, dir: 0 };
+  programState.collected = new Set();
+  const version = programState.version;
+  const directions = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+  renderProgram();
+  $("#labStatus").textContent = "程序开始执行。注意观察高亮的指令和探测车的位置。";
+  let failed = false;
+
+  for (let index = 0; index < programState.queue.length; index += 1) {
+    if (!labDialog.open || state.currentLab !== "program" || programState.version !== version) return;
+    const command = programState.queue[index];
+    const block = $(`.command-block[data-step="${index}"]`);
+    if (block) block.classList.add("active");
+    const robot = $("#programRobot");
+
+    if (command === "L" || command === "R") {
+      programState.robot.dir = (programState.robot.dir + (command === "R" ? 1 : 3)) % 4;
+      robot.style.setProperty("--dir", programState.robot.dir);
+      await programDelay(340);
+    } else {
+      const [rowStep, colStep] = directions[programState.robot.dir];
+      const nextRow = programState.robot.row + rowStep;
+      const nextCol = programState.robot.col + colStep;
+      const nextKey = `${nextRow},${nextCol}`;
+      const outside = nextRow < 0 || nextRow > 4 || nextCol < 0 || nextCol > 4;
+      if (outside || PROGRAM_ROCKS.has(nextKey)) {
+        robot.classList.add("bump");
+        $("#labStatus").textContent = `第 ${index + 1} 条指令撞到了${outside ? "边界" : "岩石"}。修改程序后再运行。`;
+        failed = true;
+        await programDelay(420);
+        break;
+      }
+      programState.robot.row = nextRow;
+      programState.robot.col = nextCol;
+      robot.style.setProperty("--row", nextRow);
+      robot.style.setProperty("--col", nextCol);
+      await programDelay(420);
+      if (PROGRAM_ENERGY.has(nextKey)) {
+        programState.collected.add(nextKey);
+        const cell = $(`[data-cell="${nextKey}"]`);
+        if (cell) cell.classList.add("collected");
+        $("#labStatus").textContent = `收集到第 ${programState.collected.size} 颗能量星，继续执行。`;
+      }
+    }
+    if (block) block.classList.remove("active");
+  }
+
+  programState.running = false;
+  if (!failed) {
+    const atGoal = programState.robot.row === 0 && programState.robot.col === 4;
+    if (atGoal && programState.collected.size === PROGRAM_ENERGY.size) {
+      completeLab("route", `程序执行成功！你用 ${programState.queue.length} 条指令收集能量并到达终点。策略工具：先规划完整路径，再按顺序执行。`);
+    } else if (atGoal) {
+      $("#labStatus").textContent = "到达终点了，但还有能量星没收集。调整中间的路线。";
+    } else {
+      $("#labStatus").textContent = "程序执行完了，但还没到终点。继续追加或调整指令。";
+    }
+  }
+  if (state.currentLab === "program") renderProgram();
 }
 
 const SORT_ITEMS = [
