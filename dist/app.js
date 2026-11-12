@@ -211,6 +211,7 @@ const LAB_META = {
   sort: { kicker: "策略实验 03 · 条件分类", title: "双圈分类站", hint: "逐个问两个问题：它是偶数吗？它是 3 的倍数吗？两个答案的组合决定位置。" },
   nim: { kicker: "策略实验 04 · 逆向思考", title: "最后的能量石", hint: "从结尾倒着想：如果能让机器人面对 4、8、12 颗，你就能控制之后的节奏。" }
 };
+const LAB_ORDER = ["escape", "program", "sort", "nim"];
 
 function openLab(type) {
   state.currentLab = type;
@@ -219,11 +220,13 @@ function openLab(type) {
   $("#labKicker").textContent = meta.kicker;
   $("#labGameTitle").textContent = meta.title;
   resetLab();
-  labDialog.showModal();
+  if (!labDialog.open) labDialog.showModal();
 }
 
 function resetLab() {
   $("#labStatus").textContent = "观察规则，然后开始尝试。";
+  $("#labNext").classList.add("hidden");
+  $("#labNext").removeAttribute("data-next-lab");
   if (state.currentLab === "escape") resetEscape();
   if (state.currentLab === "program") resetProgram();
   if (state.currentLab === "sort") resetSort();
@@ -232,6 +235,16 @@ function resetLab() {
 
 function completeLab(skill, message) {
   $("#labStatus").textContent = message;
+  const nextLab = LAB_ORDER[LAB_ORDER.indexOf(state.currentLab) + 1];
+  const nextButton = $("#labNext");
+  if (nextLab) {
+    nextButton.textContent = `进入下一关：${LAB_META[nextLab].title} →`;
+    nextButton.dataset.nextLab = nextLab;
+    nextButton.classList.remove("hidden");
+  } else {
+    nextButton.classList.add("hidden");
+    nextButton.removeAttribute("data-next-lab");
+  }
   if (labAwarded) return;
   labAwarded = true;
   state.stars += 5;
@@ -245,6 +258,8 @@ function resetEscape() {
     moves: 0,
     selected: "R",
     complete: false,
+    animating: false,
+    version: Date.now(),
     vehicles: [
       { id: "R", label: "探测车", row: 2, col: 0, len: 2, dir: "h", className: "target" },
       { id: "A", label: "蓝车", row: 1, col: 2, len: 3, dir: "v", className: "block-a" },
@@ -271,26 +286,53 @@ function canMoveVehicle(vehicle, delta) {
 
 function renderEscape() {
   const selected = escapeState.vehicles.find((vehicle) => vehicle.id === escapeState.selected);
-  const vehicleMarkup = escapeState.vehicles.map((vehicle) => `<button type="button" class="vehicle ${vehicle.className} ${vehicle.id === escapeState.selected ? "selected" : ""}" data-vehicle="${vehicle.id}" aria-label="选择${vehicle.label}" style="grid-row:${vehicle.row + 1}/span ${vehicle.dir === "v" ? vehicle.len : 1};grid-column:${vehicle.col + 1}/span ${vehicle.dir === "h" ? vehicle.len : 1}">${vehicle.id}</button>`).join("");
-  $("#labGameArea").innerHTML = `<div class="escape-layout"><div class="escape-board-wrap"><div class="escape-board">${vehicleMarkup}<span class="escape-exit">出口</span></div></div><div class="escape-controls"><div><h4>移动选中的车辆</h4><p>车辆只能前后移动，不能转弯，也不能穿过其他车辆。</p></div><div class="move-pad"><button class="move-up" data-row="-1" data-col="0" aria-label="向上移动">↑</button><button class="move-left" data-row="0" data-col="-1" aria-label="向左移动">←</button><button class="move-right" data-row="0" data-col="1" aria-label="向右移动">→</button><button class="move-down" data-row="1" data-col="0" aria-label="向下移动">↓</button></div><span class="move-counter">已用 ${escapeState.moves} 步 · 参考目标 9 步</span></div></div>`;
-  $$("[data-vehicle]").forEach((button) => button.addEventListener("click", () => { escapeState.selected = button.dataset.vehicle; renderEscape(); }));
+  const vehicleMarkup = escapeState.vehicles.map((vehicle) => `<button type="button" class="vehicle ${vehicle.className} ${vehicle.id === escapeState.selected && !escapeState.complete ? "selected" : ""} ${vehicle.id === "R" && escapeState.complete ? "escape-success" : ""}" data-vehicle="${vehicle.id}" aria-label="选择${vehicle.label}" style="grid-row:${vehicle.row + 1}/span ${vehicle.dir === "v" ? vehicle.len : 1};grid-column:${vehicle.col + 1}/span ${vehicle.dir === "h" ? vehicle.len : 1}">${vehicle.id}</button>`).join("");
+  const sparks = escapeState.complete ? `<span class="escape-sparks" aria-hidden="true">${Array.from({ length: 7 }, () => "<i></i>").join("")}</span>` : "";
+  $("#labGameArea").innerHTML = `<div class="escape-layout"><div class="escape-board-wrap"><div class="escape-board ${escapeState.complete ? "celebrating" : ""}">${vehicleMarkup}<span class="escape-exit">出口</span>${sparks}</div></div><div class="escape-controls"><div><h4>移动选中的车辆</h4><p>车辆只能前后移动，不能转弯，也不能穿过其他车辆。</p></div><div class="move-pad"><button class="move-up" data-row="-1" data-col="0" aria-label="向上移动">↑</button><button class="move-left" data-row="0" data-col="-1" aria-label="向左移动">←</button><button class="move-right" data-row="0" data-col="1" aria-label="向右移动">→</button><button class="move-down" data-row="1" data-col="0" aria-label="向下移动">↓</button></div><span class="move-counter">已用 ${escapeState.moves} 步 · 参考目标 9 步</span></div></div>`;
+  $$("[data-vehicle]").forEach((button) => button.addEventListener("click", () => {
+    if (escapeState.animating || escapeState.complete) return;
+    escapeState.selected = button.dataset.vehicle;
+    renderEscape();
+  }));
   $$(".move-pad button").forEach((button) => {
     const delta = { row: Number(button.dataset.row), col: Number(button.dataset.col) };
-    button.disabled = escapeState.complete || !canMoveVehicle(selected, delta);
+    button.disabled = escapeState.complete || escapeState.animating || !canMoveVehicle(selected, delta);
     button.addEventListener("click", () => moveSelectedVehicle(delta));
   });
 }
 
-function moveSelectedVehicle(delta) {
+async function moveSelectedVehicle(delta) {
   const vehicle = escapeState.vehicles.find((item) => item.id === escapeState.selected);
-  if (!canMoveVehicle(vehicle, delta)) return;
+  if (escapeState.animating || escapeState.complete || !canMoveVehicle(vehicle, delta)) return;
+  escapeState.animating = true;
+  const version = escapeState.version;
+  $$(".move-pad button, [data-vehicle]").forEach((button) => { button.disabled = true; });
+  const element = $(`[data-vehicle="${vehicle.id}"]`);
+  const board = $(".escape-board");
+  const cellSize = board ? board.clientWidth / 6 : 60;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (element?.animate) {
+    const animation = element.animate([
+      { transform: "translate(0, 0)" },
+      { transform: `translate(${delta.col * cellSize}px, ${delta.row * cellSize}px)` }
+    ], { duration: reducedMotion ? 1 : 260, easing: "cubic-bezier(.22,.78,.28,1)", fill: "forwards" });
+    await animation.finished.catch(() => {});
+  }
+  if (!escapeState || escapeState.version !== version) return;
   vehicle.row += delta.row;
   vehicle.col += delta.col;
   escapeState.moves += 1;
+  escapeState.animating = false;
   const target = escapeState.vehicles.find((item) => item.id === "R");
   if (target.col + target.len === 6) {
     escapeState.complete = true;
-    completeLab("route", `出舱成功！你用了 ${escapeState.moves} 步。策略工具：先找关键障碍，再安排移动顺序。`);
+    $("#labStatus").textContent = "出口已打开——探测车正在驶出舱门！";
+    renderEscape();
+    setTimeout(() => {
+      if (!escapeState || escapeState.version !== version || !escapeState.complete) return;
+      completeLab("route", `出舱成功！你用了 ${escapeState.moves} 步。策略工具：先找关键障碍，再安排移动顺序。`);
+    }, reducedMotion ? 20 : 950);
+    return;
   } else {
     $("#labStatus").textContent = `已移动 ${vehicle.label}。现在重新观察：红车前方还剩哪些障碍？`;
   }
@@ -510,6 +552,10 @@ $("#gameClose").addEventListener("click", () => gameDialog.close());
 $("#labClose").addEventListener("click", () => labDialog.close());
 $("#labReset").addEventListener("click", resetLab);
 $("#labHint").addEventListener("click", () => { $("#labStatus").textContent = LAB_META[state.currentLab].hint; });
+$("#labNext").addEventListener("click", () => {
+  const nextLab = $("#labNext").dataset.nextLab;
+  if (nextLab) openLab(nextLab);
+});
 $("#hintButton").addEventListener("click", showHint);
 $("#nextButton").onclick = nextQuestion;
 
