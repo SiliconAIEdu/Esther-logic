@@ -1,0 +1,219 @@
+const QUESTION_BANK = {
+  pattern: {
+    title: "信号塔的秘密节奏",
+    kicker: "任务 01 · 发现规律",
+    questions: {
+      10: [
+        { prompt: "信号灯按什么规律闪烁？找出下一束信号。", visual: ["2", "4", "6", "8", "?"], options: ["9", "10", "11", "12"], answer: 1, hint: "比较相邻两个数，每次增加了多少？", explain: "每次增加 2，所以 8 后面是 10。" },
+        { prompt: "每次信号都比上一次多一些。下一束是多少？", visual: ["1", "3", "6", "10", "?"], options: ["13", "14", "15", "16"], answer: 2, hint: "增加的数依次是 2、3、4，下一次呢？", explain: "增加量也在变：+2、+3、+4、+5，所以答案是 15。" },
+        { prompt: "两个节奏轮流出现。补上缺失的信号。", visual: ["3", "8", "5", "8", "7", "?"], options: ["8", "9", "10", "12"], answer: 0, hint: "把第 1、3、5 个和第 2、4、6 个分别看。", explain: "奇数位置是 3、5、7；偶数位置一直是 8。" }
+      ],
+      11: [
+        { prompt: "这串信号由两种变化轮流控制。下一束是多少？", visual: ["4", "7", "14", "17", "34", "?"], options: ["35", "36", "37", "68"], answer: 2, hint: "试试“加一个数”和“乘一个数”轮流发生。", explain: "规则是 +3、×2 交替：34 + 3 = 37。" },
+        { prompt: "观察信号之间的差，找出下一束。", visual: ["2", "5", "10", "17", "?"], options: ["24", "25", "26", "27"], answer: 2, hint: "相邻信号分别增加 3、5、7。", explain: "增加的是连续奇数 3、5、7、9，因此 17 + 9 = 26。" },
+        { prompt: "每个信号都由前两个信号共同决定。下一束是多少？", visual: ["2", "3", "5", "8", "13", "?"], options: ["18", "19", "20", "21"], answer: 3, hint: "把相邻的前两个数合起来看看。", explain: "每个数等于前两个数之和：8 + 13 = 21。" }
+      ],
+      12: [
+        { prompt: "信号看似增长，其实每一步用了同一个操作。下一束是多少？", visual: ["3", "8", "18", "38", "?"], options: ["68", "74", "76", "78"], answer: 3, hint: "先乘 2，再观察还差多少。", explain: "每次都是 ×2 +2，所以 38 × 2 + 2 = 78。" },
+        { prompt: "把位置也看作线索。第 6 束信号是多少？", visual: ["2", "6", "12", "20", "30", "?"], options: ["36", "40", "42", "48"], answer: 2, hint: "第 1 项可以写成 1×2，第 2 项可以写成 2×3。", explain: "第 n 项是 n×(n+1)，所以第 6 项是 6×7=42。" },
+        { prompt: "规律藏在“变化的变化”里。补全最后一束。", visual: ["1", "2", "6", "15", "31", "?"], options: ["46", "52", "56", "58"], answer: 2, hint: "增加量是 1、4、9、16，它们有什么共同点？", explain: "依次增加 1²、2²、3²、4²、5²，所以 31+25=56。" }
+      ]
+    }
+  },
+  code: {
+    title: "档案室的三位密码",
+    kicker: "任务 02 · 条件推理",
+    questions: {
+      10: [
+        { prompt: "密码由 2、4、7 各用一次组成。7 不在最后，2 在 4 前面。密码是？", options: ["247", "274", "427", "472"], answer: 1, hint: "先放置不能在最后的 7，再检查 2 是否在 4 前。", explain: "只有 274 同时满足：7 不在最后，2 也在 4 前面。" },
+        { prompt: "机器人说：密码大于 300，小于 500，个位是 2，三个数字互不相同。哪一个可能？", options: ["252", "342", "512", "442"], answer: 1, hint: "先用大小范围确定百位，再检查是否有重复数字。", explain: "342 在范围内、个位是 2，并且三个数字不同。" },
+        { prompt: "三枚徽章排成一排：蓝不在中间，红在绿的左边。哪种排列可行？", options: ["蓝-绿-红", "红-蓝-绿", "绿-红-蓝", "绿-蓝-红"], answer: 1, hint: "逐个检查：蓝的位置，以及红和绿的左右关系。", explain: "红-蓝-绿满足蓝不在中间吗？等等，蓝在中间，所以不满足。正确应是红-绿-蓝。", correction: true }
+      ],
+      11: [
+        { prompt: "密码由 1、3、6 各用一次组成。它是偶数；1 不在百位；3 在 1 左边。密码是？", options: ["136", "316", "361", "613"], answer: 1, hint: "偶数密码的个位必须是谁？剩下再看 3 与 1 的顺序。", explain: "个位必须是 6；又因为 3 在 1 左边，所以密码是 316。" },
+        { prompt: "A、B、C 三个舱门只有一个安全。A 说“B安全”，B说“我不安全”，C说“A不安全”。只有一句是真话，安全门是？", options: ["A", "B", "C", "无法确定"], answer: 0, hint: "分别假设 A、B、C 安全，数一数每种情况下有几句真话。", explain: "若 A 安全：A的话假、B的话真、C的话假，刚好一句真话。" },
+        { prompt: "档案编号是三位数。百位比十位大 2，个位是十位的 2 倍，三个数字之和为 12。编号是？", options: ["426", "462", "624", "642"], answer: 0, hint: "把十位看作起点，百位和个位都能由它表示。", explain: "十位是 2，则百位 4、个位 4？会重复。逐项验证后题设无唯一有效项。", invalid: true }
+      ],
+      12: [
+        { prompt: "密码由 2、5、8 各用一次。守卫三句话中只有一句是假话：①2在首位 ②8不在末位 ③5在2右边。密码是？", options: ["258", "285", "528", "852"], answer: 0, hint: "对每个选项逐句判断，寻找“两真一假”。", explain: "258 中：①真、②假、③真，恰好只有一句是假话。" },
+        { prompt: "四位研究员甲乙丙丁排队。甲不挨着乙；丙在丁前；乙不在两端。哪种顺序可能？", options: ["甲乙丙丁", "丁乙甲丙", "甲丙乙丁", "丙丁乙甲"], answer: 2, hint: "每个选项都检查三条限制，不要只检查一条。", explain: "甲-丙-乙-丁：甲不挨乙，丙在丁前，乙也不在两端。" },
+        { prompt: "三个箱子标签全贴错了：苹果、橙子、混合。只从一个箱子拿出一个水果，就能全部改对。先从哪个标签的箱子拿？", options: ["苹果", "橙子", "混合", "任意一个"], answer: 2, hint: "既然所有标签都错，“混合”箱里一定不是混合。", explain: "从“混合”箱抽取，可立刻确定它装的是单一水果，再利用“标签全错”推完另外两个。" }
+      ]
+    }
+  },
+  route: {
+    title: "月面车的能量路线",
+    kicker: "任务 03 · 策略规划",
+    questions: {
+      10: [
+        { prompt: "月面车要从基地到矿区，只能选一条路线。哪条消耗的能量最少？", board: [["A路线", "3+4+2"], ["B路线", "5+2+1"], ["C路线", "2+3+4"], ["D路线", "6+1+3"]], options: ["A路线", "B路线", "C路线", "D路线"], answer: 1, hint: "分别算出整条路线的总消耗，再比较。", explain: "A=9、B=8、C=9、D=10，B路线最省能量。" },
+        { prompt: "车里有 10 格能量。必须经过补给点，而且到终点至少剩 2 格。哪条路线可行？", board: [["A", "耗9"], ["B", "耗8"], ["C", "耗7但绕开补给"], ["D", "耗11"]], options: ["A", "B", "C", "D"], answer: 1, hint: "先排除没经过补给的，再检查剩余能量。", explain: "B经过补给且消耗8，正好还剩2格。" },
+        { prompt: "三件样本重 2、3、5 千克，月面车最多载 7 千克。怎样带走最多件？", options: ["只带5", "带2和3", "带2和5", "三件都带"], answer: 2, hint: "“最多件”先比较件数，再看是否超过重量。", explain: "2+5=7，可带两件；2+3也能带两件。两者都是最优方案。", multi: true }
+      ],
+      11: [
+        { prompt: "路线既要经过通信站，又要在 12 分钟内到达。哪条路线符合？", board: [["A", "10分·无通信站"], ["B", "12分·经通信站"], ["C", "13分·经通信站"], ["D", "9分·无通信站"]], options: ["A", "B", "C", "D"], answer: 1, hint: "这是双重条件：时间和必经地点都要满足。", explain: "只有 B 同时经过通信站，且时间没有超过 12 分钟。" },
+        { prompt: "月面车有 14 格能量。去程三段消耗 3、4、2，返程至少要留 4 格。最多还能花几格探索？", options: ["1", "2", "3", "5"], answer: 0, hint: "先扣掉去程，再预留返程，剩下才可用于探索。", explain: "14-3-4-2-4=1，最多只能花 1 格探索。" },
+        { prompt: "四个采样点中必须访问三个。P耗2、Q耗4、R耗3、S耗5，总能量10。哪组可行？", options: ["PQR", "PQS", "PRS", "QRS"], answer: 0, hint: "逐组相加，注意“必须访问三个”。", explain: "P+Q+R=2+4+3=9，不超过10；其余组合都超过10。" }
+      ],
+      12: [
+        { prompt: "每走一段会消耗能量，但经过充能站会增加 3 格。哪条路线到终点剩余最多？初始 8 格。", board: [["A", "耗4→充3→耗4"], ["B", "耗2→耗3"], ["C", "耗5→充3→耗2"], ["D", "耗1→耗6"]], options: ["A", "B", "C", "D"], answer: 1, hint: "按路线顺序逐步更新能量，不要只看消耗总和。", explain: "A剩3、B剩3、C剩4、D剩1，实际 C 最多。", correctedAnswer: 2 },
+        { prompt: "三个任务价值分别为 6、8、11，耗时分别为 2、3、5 小时。只有 5 小时，怎样让总价值最大？", options: ["只做任务3", "任务1+2", "任务1+3", "任务2+3"], answer: 1, hint: "先排除超时组合，再比较可行方案的总价值。", explain: "任务1+2正好5小时，价值14，高于只做任务3的11。" },
+        { prompt: "路线每天只能走一次。连续三天不能重复同一路线，且第2天不能走B。哪份计划合规？", options: ["A-B-C", "A-C-A", "B-A-C", "C-C-A"], answer: 2, hint: "“不能重复”指三天内不重复，再检查第2天。", explain: "B-A-C 三天不重复，且第2天走的是A，不是B。" }
+      ]
+    }
+  }
+};
+
+const state = {
+  age: Number(localStorage.getItem("logicPlanetAge")) || 11,
+  stars: Number(localStorage.getItem("logicPlanetStars")) || 0,
+  progress: JSON.parse(localStorage.getItem("logicPlanetProgress") || '{"pattern":0,"code":0,"route":0}'),
+  currentMission: null,
+  questionIndex: 0,
+  attempts: 0,
+  answered: false
+};
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+const ageDialog = $("#ageDialog");
+const gameDialog = $("#gameDialog");
+
+function saveState() {
+  localStorage.setItem("logicPlanetAge", state.age);
+  localStorage.setItem("logicPlanetStars", state.stars);
+  localStorage.setItem("logicPlanetProgress", JSON.stringify(state.progress));
+}
+
+function renderDashboard() {
+  $("#ageButton").textContent = `${state.age} 岁`;
+  $("#starCount").textContent = state.stars;
+  const descriptions = { 10: "10 岁 · 观察变化与单步推理", 11: "11 岁 · 多步推理与条件组合", 12: "12 岁 · 反向验证与策略优化" };
+  $("#ageDescription").textContent = descriptions[state.age];
+  $$(".age-options button").forEach((button) => button.classList.toggle("selected", Number(button.dataset.age) === state.age));
+  Object.entries(state.progress).forEach(([skill, value]) => {
+    const score = Math.min(100, value * 12);
+    $(`[data-skill="${skill}"]`).style.width = `${score}%`;
+    $(`#${skill}Score`).textContent = `${score}%`;
+  });
+}
+
+function openMission(mission) {
+  state.currentMission = mission;
+  state.questionIndex = 0;
+  state.attempts = 0;
+  state.answered = false;
+  const data = QUESTION_BANK[mission];
+  $("#gameKicker").textContent = data.kicker;
+  $("#gameTitle").textContent = data.title;
+  $("#nextButton").innerHTML = '下一题 <span aria-hidden="true">→</span>';
+  $("#nextButton").onclick = nextQuestion;
+  renderQuestion();
+  gameDialog.showModal();
+}
+
+function normalizedQuestion(raw) {
+  if (raw.correctedAnswer !== undefined) return { ...raw, answer: raw.correctedAnswer };
+  if (raw.correction) return { ...raw, options: ["蓝-绿-红", "红-绿-蓝", "绿-红-蓝", "绿-蓝-红"], answer: 1, explain: "红-绿-蓝满足：蓝不在中间，并且红在绿的左边。" };
+  if (raw.invalid) return { prompt: "档案编号由 2、4、6 各用一次，百位比十位大 2，个位最大。编号是？", options: ["246", "426", "462", "624"], answer: 1, hint: "个位要先放最大的6，再检查百位和十位相差2。", explain: "个位放6；4比2大2，所以编号是426。" };
+  return raw;
+}
+
+function getQuestions() {
+  return QUESTION_BANK[state.currentMission].questions[state.age].map(normalizedQuestion);
+}
+
+function renderQuestion() {
+  const questions = getQuestions();
+  const q = questions[state.questionIndex];
+  state.answered = false;
+  state.attempts = 0;
+  $("#questionCounter").textContent = `${state.questionIndex + 1} / ${questions.length}`;
+  $("#gameProgressBar").style.width = `${(state.questionIndex / questions.length) * 100}%`;
+  $("#feedback").className = "feedback";
+  $("#feedback").innerHTML = "";
+  $("#hintButton").classList.remove("hidden");
+  $("#nextButton").classList.add("hidden");
+
+  let visual = "";
+  if (q.visual) visual = `<div class="sequence" aria-label="数列 ${q.visual.join("，")}">${q.visual.map((item) => `<span class="${item === "?" ? "mystery" : ""}">${item}</span>`).join("")}</div>`;
+  if (q.board) visual = `<div class="route-board">${q.board.map(([name, detail]) => `<div class="route-node"><span><strong>${name}</strong>${detail}</span></div>`).join("")}</div>`;
+  const optionMarkup = q.options.map((option, index) => `<button class="option" type="button" data-index="${index}"><span>${String.fromCharCode(65 + index)}.</span> ${option}</button>`).join("");
+  $("#questionArea").innerHTML = `<p class="question-label">思考题 ${state.questionIndex + 1}</p><h3>${q.prompt}</h3>${visual}<div class="options">${optionMarkup}</div>`;
+  $$(".option").forEach((button) => button.addEventListener("click", () => chooseAnswer(Number(button.dataset.index))));
+}
+
+function chooseAnswer(index) {
+  if (state.answered) return;
+  const q = getQuestions()[state.questionIndex];
+  const feedback = $("#feedback");
+  $$(".option").forEach((button) => button.classList.remove("selected", "wrong"));
+  const selected = $(`.option[data-index="${index}"]`);
+  selected.classList.add("selected");
+  state.attempts += 1;
+
+  const accepted = index === q.answer || (q.multi && index === 1);
+  if (accepted) {
+    state.answered = true;
+    selected.classList.add("correct");
+    feedback.className = "feedback show";
+    feedback.innerHTML = `<strong>${state.attempts === 1 ? "漂亮，一次推理成功！" : "找到了！"}</strong>${q.explain}`;
+    $("#hintButton").classList.add("hidden");
+    $("#nextButton").classList.remove("hidden");
+    state.stars += state.attempts === 1 ? 3 : 2;
+    state.progress[state.currentMission] += 1;
+    saveState();
+    renderDashboard();
+  } else {
+    selected.classList.add("wrong");
+    feedback.className = "feedback show error";
+    feedback.innerHTML = `<strong>这个答案漏掉了一条线索。</strong>先别急着换答案，回到题目逐条检查限制条件。`;
+  }
+}
+
+function showHint() {
+  const q = getQuestions()[state.questionIndex];
+  const feedback = $("#feedback");
+  feedback.className = "feedback show";
+  feedback.innerHTML = `<strong>给你一小步：</strong>${q.hint}`;
+}
+
+function nextQuestion() {
+  const questions = getQuestions();
+  if (state.questionIndex < questions.length - 1) {
+    state.questionIndex += 1;
+    renderQuestion();
+    return;
+  }
+  $("#gameProgressBar").style.width = "100%";
+  $("#feedback").className = "feedback";
+  $("#hintButton").classList.add("hidden");
+  $("#nextButton").textContent = "完成任务";
+  $("#nextButton").onclick = () => {
+    gameDialog.close();
+    $("#nextButton").innerHTML = '下一题 <span aria-hidden="true">→</span>';
+    $("#nextButton").onclick = nextQuestion;
+  };
+  $("#questionArea").innerHTML = `<div class="completion"><div class="completion-mark">✓</div><p class="eyebrow">任务完成</p><h3>你不是“猜对了”，<br>而是把理由想清楚了。</h3><p>本轮获得思维星星，能力档案也已更新。明天再来，大脑会记住今天用过的工具。</p></div>`;
+}
+
+$("#ageButton").addEventListener("click", () => ageDialog.showModal());
+$$(".age-options button").forEach((button) => button.addEventListener("click", () => {
+  state.age = Number(button.dataset.age);
+  saveState();
+  renderDashboard();
+  ageDialog.close();
+}));
+$$(".mission-card").forEach((card) => {
+  card.addEventListener("click", () => openMission(card.dataset.mission));
+  card.querySelector("button").addEventListener("click", (event) => {
+    event.stopPropagation();
+    openMission(card.dataset.mission);
+  });
+});
+$("#gameClose").addEventListener("click", () => gameDialog.close());
+$("#hintButton").addEventListener("click", showHint);
+$("#nextButton").onclick = nextQuestion;
+
+renderDashboard();
+if (!localStorage.getItem("logicPlanetAge")) ageDialog.showModal();

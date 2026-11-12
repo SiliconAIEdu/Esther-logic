@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4efe6" />
+    <meta name="description" content="逻辑星球——为10至12岁孩子设计的数理逻辑思维训练游戏。" />
+    <title>逻辑星球｜今天也来想明白一件事</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="返回逻辑星球首页">
+        <span class="brand-mark">L</span>
+        <span>逻辑星球</span>
+      </a>
+      <nav class="topnav" aria-label="主要导航">
+        <a class="active" href="#missions">今日任务</a>
+        <a href="#progress">能力档案</a>
+      </nav>
+      <div class="player-chip">
+        <span class="star-icon" aria-hidden="true">✦</span>
+        <strong id="starCount">0</strong>
+        <button id="ageButton" class="age-button" type="button" aria-label="修改年龄">11 岁</button>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero-copy">
+          <p class="eyebrow">第 01 站 · 思维研究所</p>
+          <h1 id="heroTitle">别急着算，<br /><em>先想明白。</em></h1>
+          <p class="hero-text">这里没有背公式，也没有标准套路。观察、猜想、验证——像真正的研究员一样，把混乱变成线索。</p>
+          <a class="primary-button" href="#missions">开始今日挑战 <span aria-hidden="true">→</span></a>
+          <div class="daily-note">
+            <span class="note-line" aria-hidden="true"></span>
+            <span>每天 15 分钟，比一次做很多更有效</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="由圆点、方块和连线构成的逻辑图案">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="logic-sun"><span>?</span></div>
+          <div class="shape shape-a">●</div>
+          <div class="shape shape-b">■</div>
+          <div class="shape shape-c">▲</div>
+          <div class="scribble">如果……<br />那么？</div>
+        </div>
+      </section>
+
+      <section id="missions" class="missions-section" aria-labelledby="missionTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">今日训练菜单</p>
+            <h2 id="missionTitle">选择一种思考方式</h2>
+          </div>
+          <p id="ageDescription" class="age-description">11 岁 · 多步推理与条件组合</p>
+        </div>
+
+        <div class="mission-grid">
+          <article class="mission-card card-yellow" data-mission="pattern">
+            <div class="card-number">01</div>
+            <div class="card-icon pattern-icon" aria-hidden="true"><i></i><i></i><i></i></div>
+            <p class="card-kicker">观察力 × 规律</p>
+            <h3>信号塔的<br />秘密节奏</h3>
+            <p>寻找变化背后的规则，而不是只猜下一个数字。</p>
+            <div class="card-footer">
+              <span>约 5 分钟</span>
+              <button type="button" class="round-button" aria-label="开始信号塔任务">↗</button>
+            </div>
+          </article>
+
+          <article class="mission-card card-coral" data-mission="code">
+            <div class="card-number">02</div>
+            <div class="card-icon code-icon" aria-hidden="true">2 7 ?</div>
+            <p class="card-kicker">排除法 × 条件</p>
+            <h3>档案室的<br />三位密码</h3>
+            <p>把每一条线索都用上，逐步排除“不可能”。</p>
+            <div class="card-footer">
+              <span>约 6 分钟</span>
+              <button type="button" class="round-button" aria-label="开始密码任务">↗</button>
+            </div>
+          </article>
+
+          <article class="mission-card card-blue" data-mission="route">
+            <div class="card-number">03</div>
+            <div class="card-icon route-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <p class="card-kicker">规划力 × 最优化</p>
+            <h3>月面车的<br />能量路线</h3>
+            <p>在限制条件中找到好路线，并说清楚为什么。</p>
+            <div class="card-footer">
+              <span>约 5 分钟</span>
+              <button type="button" class="round-button" aria-label="开始路线任务">↗</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="progress" class="progress-section" aria-labelledby="progressTitle">
+        <div class="progress-copy">
+          <p class="eyebrow">你的能力档案</p>
+          <h2 id="progressTitle">练的不是题目，<br />是大脑的“工具箱”。</h2>
+          <p>每次挑战后，我们记录你使用了哪种思考工具。没有排名，只有自己看得见的成长。</p>
+        </div>
+        <div class="skill-list" id="skillList">
+          <div class="skill-row"><span>发现规律</span><div class="skill-track"><i data-skill="pattern"></i></div><b id="patternScore">0%</b></div>
+          <div class="skill-row"><span>条件推理</span><div class="skill-track"><i data-skill="code"></i></div><b id="codeScore">0%</b></div>
+          <div class="skill-row"><span>策略规划</span><div class="skill-track"><i data-skill="route"></i></div><b id="routeScore">0%</b></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>LOGIC PLANET · 逻辑星球</span>
+      <span>允许慢慢想，也允许改变答案。</span>
+    </footer>
+
+    <dialog id="ageDialog" class="age-dialog">
+      <form method="dialog">
+        <button class="close-button" value="cancel" aria-label="关闭">×</button>
+        <p class="eyebrow">设置探索难度</p>
+        <h2>今天几岁？</h2>
+        <p>年龄只用来调整线索数量和推理步数，不会限制你能玩的内容。</p>
+        <div class="age-options">
+          <button type="button" data-age="10"><strong>10</strong><span>岁 · 单步规律</span></button>
+          <button type="button" data-age="11"><strong>11</strong><span>岁 · 多步组合</span></button>
+          <button type="button" data-age="12"><strong>12</strong><span>岁 · 反向验证</span></button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="gameDialog" class="game-dialog">
+      <div class="game-shell">
+        <header class="game-header">
+          <div>
+            <p id="gameKicker" class="eyebrow">任务 01</p>
+            <h2 id="gameTitle">信号塔的秘密节奏</h2>
+          </div>
+          <div class="game-meta"><span id="questionCounter">1 / 3</span><button id="gameClose" class="close-button" type="button" aria-label="退出任务">×</button></div>
+        </header>
+        <div class="game-progress"><i id="gameProgressBar"></i></div>
+        <section id="questionArea" class="question-area" aria-live="polite"></section>
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+        <div class="game-actions">
+          <button id="hintButton" class="text-button" type="button">给我一个小提示</button>
+          <button id="nextButton" class="primary-button hidden" type="button">下一题 <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
