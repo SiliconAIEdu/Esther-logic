@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f4efe6" />
-    <meta name="description" content="逻辑星球——为10至12岁孩子设计的数理逻辑思维训练游戏。" />
+    <meta name="description" content="逻辑星球——为9至12岁孩子设计的数理逻辑思维训练游戏。" />
     <title>逻辑星球｜今天也来想明白一件事</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -17,6 +17,7 @@
       </a>
       <nav class="topnav" aria-label="主要导航">
         <a class="active" href="#missions">今日任务</a>
+        <a href="#lab">策略实验室 <small>NEW</small></a>
         <a href="#progress">能力档案</a>
       </nav>
       <div class="player-chip">
@@ -97,6 +98,40 @@
         </div>
       </section>
 
+      <section id="lab" class="lab-section" aria-labelledby="labTitle">
+        <div class="lab-heading">
+          <div>
+            <p class="eyebrow">NEW · 策略实验室</p>
+            <h2 id="labTitle">先动手试，<br />再说出你的策略。</h2>
+          </div>
+          <p>从成熟逻辑游戏中提炼的三种思考工具，全部使用原创关卡与界面实现。适合 9 岁起步，也值得反复挑战。</p>
+        </div>
+        <div class="lab-grid">
+          <article class="lab-card" data-lab="escape">
+            <div class="lab-card-top"><span>空间规划</span><b>01</b></div>
+            <div class="mini-board" aria-hidden="true"><i class="mini-rover"></i><i class="mini-block a"></i><i class="mini-block b"></i></div>
+            <h3>探测车出舱</h3>
+            <p>车辆只能沿自身方向移动。先清障，再让红色探测车驶出右侧出口。</p>
+            <button type="button">进入实验 <span>→</span></button>
+          </article>
+          <article class="lab-card" data-lab="sort">
+            <div class="lab-card-top"><span>条件分类</span><b>02</b></div>
+            <div class="venn-art" aria-hidden="true"><i></i><i></i><span>12</span><em>7</em></div>
+            <h3>双圈分类站</h3>
+            <p>一个物体可能同时满足两个条件。分清“并且”“只是”和“都不是”。</p>
+            <button type="button">进入实验 <span>→</span></button>
+          </article>
+          <article class="lab-card" data-lab="nim">
+            <div class="lab-card-top"><span>逆向思考</span><b>03</b></div>
+            <div class="stones-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <h3>最后的能量石</h3>
+            <p>每轮拿走 1–3 颗。别只看眼前，试着倒着找到必胜位置。</p>
+            <button type="button">进入实验 <span>→</span></button>
+          </article>
+        </div>
+        <p class="research-credit">玩法研究参考 NRICH、PBS KIDS 与 ThinkFun 的公开教育说明；题目、代码和视觉均为原创。</p>
+      </section>
+
       <section id="progress" class="progress-section" aria-labelledby="progressTitle">
         <div class="progress-copy">
           <p class="eyebrow">你的能力档案</p>
@@ -123,11 +158,26 @@
         <h2>今天几岁？</h2>
         <p>年龄只用来调整线索数量和推理步数，不会限制你能玩的内容。</p>
         <div class="age-options">
+          <button type="button" data-age="9"><strong>9</strong><span>岁 · 动手探索</span></button>
           <button type="button" data-age="10"><strong>10</strong><span>岁 · 单步规律</span></button>
           <button type="button" data-age="11"><strong>11</strong><span>岁 · 多步组合</span></button>
           <button type="button" data-age="12"><strong>12</strong><span>岁 · 反向验证</span></button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="labDialog" class="lab-dialog">
+      <div class="lab-shell">
+        <header class="lab-dialog-header">
+          <div><p id="labKicker" class="eyebrow">策略实验</p><h2 id="labGameTitle">探测车出舱</h2></div>
+          <button id="labClose" class="close-button" type="button" aria-label="退出策略实验">×</button>
+        </header>
+        <div id="labGameArea" class="lab-game-area" aria-live="polite"></div>
+        <div class="lab-dialog-footer">
+          <p id="labStatus" aria-live="polite">观察规则，然后开始尝试。</p>
+          <div><button id="labHint" class="text-button" type="button">提示</button><button id="labReset" class="outline-button" type="button">重新开始</button></div>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="gameDialog" class="game-dialog">

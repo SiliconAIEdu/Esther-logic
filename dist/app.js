@@ -71,13 +71,19 @@ const state = {
   currentMission: null,
   questionIndex: 0,
   attempts: 0,
-  answered: false
+  answered: false,
+  currentLab: null
 };
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const ageDialog = $("#ageDialog");
 const gameDialog = $("#gameDialog");
+const labDialog = $("#labDialog");
+let labAwarded = false;
+let escapeState;
+let sortState;
+let nimState;
 
 function saveState() {
   localStorage.setItem("logicPlanetAge", state.age);
@@ -88,7 +94,7 @@ function saveState() {
 function renderDashboard() {
   $("#ageButton").textContent = `${state.age} 岁`;
   $("#starCount").textContent = state.stars;
-  const descriptions = { 10: "10 岁 · 观察变化与单步推理", 11: "11 岁 · 多步推理与条件组合", 12: "12 岁 · 反向验证与策略优化" };
+  const descriptions = { 9: "9 岁 · 动手探索与图形分类", 10: "10 岁 · 观察变化与单步推理", 11: "11 岁 · 多步推理与条件组合", 12: "12 岁 · 反向验证与策略优化" };
   $("#ageDescription").textContent = descriptions[state.age];
   $$(".age-options button").forEach((button) => button.classList.toggle("selected", Number(button.dataset.age) === state.age));
   Object.entries(state.progress).forEach(([skill, value]) => {
@@ -120,7 +126,8 @@ function normalizedQuestion(raw) {
 }
 
 function getQuestions() {
-  return QUESTION_BANK[state.currentMission].questions[state.age].map(normalizedQuestion);
+  const questionAge = state.age === 9 ? 10 : state.age;
+  return QUESTION_BANK[state.currentMission].questions[questionAge].map(normalizedQuestion);
 }
 
 function renderQuestion() {
@@ -197,6 +204,178 @@ function nextQuestion() {
   $("#questionArea").innerHTML = `<div class="completion"><div class="completion-mark">✓</div><p class="eyebrow">任务完成</p><h3>你不是“猜对了”，<br>而是把理由想清楚了。</h3><p>本轮获得思维星星，能力档案也已更新。明天再来，大脑会记住今天用过的工具。</p></div>`;
 }
 
+const LAB_META = {
+  escape: { kicker: "策略实验 01 · 空间规划", title: "探测车出舱", hint: "先别急着动红车。把挡在同一行的两辆竖向车都移到红车下方，再向出口前进。" },
+  sort: { kicker: "策略实验 02 · 条件分类", title: "双圈分类站", hint: "逐个问两个问题：它是偶数吗？它是 3 的倍数吗？两个答案的组合决定位置。" },
+  nim: { kicker: "策略实验 03 · 逆向思考", title: "最后的能量石", hint: "从结尾倒着想：如果能让机器人面对 4、8、12 颗，你就能控制之后的节奏。" }
+};
+
+function openLab(type) {
+  state.currentLab = type;
+  labAwarded = false;
+  const meta = LAB_META[type];
+  $("#labKicker").textContent = meta.kicker;
+  $("#labGameTitle").textContent = meta.title;
+  resetLab();
+  labDialog.showModal();
+}
+
+function resetLab() {
+  $("#labStatus").textContent = "观察规则，然后开始尝试。";
+  if (state.currentLab === "escape") resetEscape();
+  if (state.currentLab === "sort") resetSort();
+  if (state.currentLab === "nim") resetNim();
+}
+
+function completeLab(skill, message) {
+  $("#labStatus").textContent = message;
+  if (labAwarded) return;
+  labAwarded = true;
+  state.stars += 5;
+  state.progress[skill] += 1;
+  saveState();
+  renderDashboard();
+}
+
+function resetEscape() {
+  escapeState = {
+    moves: 0,
+    selected: "R",
+    complete: false,
+    vehicles: [
+      { id: "R", label: "探测车", row: 2, col: 0, len: 2, dir: "h", className: "target" },
+      { id: "A", label: "蓝车", row: 1, col: 2, len: 3, dir: "v", className: "block-a" },
+      { id: "B", label: "黄车", row: 0, col: 4, len: 3, dir: "v", className: "block-b" },
+      { id: "C", label: "绿车", row: 5, col: 0, len: 2, dir: "h", className: "decor" }
+    ]
+  };
+  renderEscape();
+}
+
+function vehicleCells(vehicle, row = vehicle.row, col = vehicle.col) {
+  return Array.from({ length: vehicle.len }, (_, index) => vehicle.dir === "h" ? `${row},${col + index}` : `${row + index},${col}`);
+}
+
+function canMoveVehicle(vehicle, delta) {
+  if ((vehicle.dir === "h" && delta.row) || (vehicle.dir === "v" && delta.col)) return false;
+  const nextRow = vehicle.row + delta.row;
+  const nextCol = vehicle.col + delta.col;
+  const cells = vehicleCells(vehicle, nextRow, nextCol);
+  if (cells.some((cell) => cell.split(",").some((value) => Number(value) < 0 || Number(value) > 5))) return false;
+  const occupied = new Set(escapeState.vehicles.filter((other) => other.id !== vehicle.id).flatMap((other) => vehicleCells(other)));
+  return cells.every((cell) => !occupied.has(cell));
+}
+
+function renderEscape() {
+  const selected = escapeState.vehicles.find((vehicle) => vehicle.id === escapeState.selected);
+  const vehicleMarkup = escapeState.vehicles.map((vehicle) => `<button type="button" class="vehicle ${vehicle.className} ${vehicle.id === escapeState.selected ? "selected" : ""}" data-vehicle="${vehicle.id}" aria-label="选择${vehicle.label}" style="grid-row:${vehicle.row + 1}/span ${vehicle.dir === "v" ? vehicle.len : 1};grid-column:${vehicle.col + 1}/span ${vehicle.dir === "h" ? vehicle.len : 1}">${vehicle.id}</button>`).join("");
+  $("#labGameArea").innerHTML = `<div class="escape-layout"><div class="escape-board-wrap"><div class="escape-board">${vehicleMarkup}<span class="escape-exit">出口</span></div></div><div class="escape-controls"><div><h4>移动选中的车辆</h4><p>车辆只能前后移动，不能转弯，也不能穿过其他车辆。</p></div><div class="move-pad"><button class="move-up" data-row="-1" data-col="0" aria-label="向上移动">↑</button><button class="move-left" data-row="0" data-col="-1" aria-label="向左移动">←</button><button class="move-right" data-row="0" data-col="1" aria-label="向右移动">→</button><button class="move-down" data-row="1" data-col="0" aria-label="向下移动">↓</button></div><span class="move-counter">已用 ${escapeState.moves} 步 · 参考目标 9 步</span></div></div>`;
+  $$("[data-vehicle]").forEach((button) => button.addEventListener("click", () => { escapeState.selected = button.dataset.vehicle; renderEscape(); }));
+  $$(".move-pad button").forEach((button) => {
+    const delta = { row: Number(button.dataset.row), col: Number(button.dataset.col) };
+    button.disabled = escapeState.complete || !canMoveVehicle(selected, delta);
+    button.addEventListener("click", () => moveSelectedVehicle(delta));
+  });
+}
+
+function moveSelectedVehicle(delta) {
+  const vehicle = escapeState.vehicles.find((item) => item.id === escapeState.selected);
+  if (!canMoveVehicle(vehicle, delta)) return;
+  vehicle.row += delta.row;
+  vehicle.col += delta.col;
+  escapeState.moves += 1;
+  const target = escapeState.vehicles.find((item) => item.id === "R");
+  if (target.col + target.len === 6) {
+    escapeState.complete = true;
+    completeLab("route", `出舱成功！你用了 ${escapeState.moves} 步。策略工具：先找关键障碍，再安排移动顺序。`);
+  } else {
+    $("#labStatus").textContent = `已移动 ${vehicle.label}。现在重新观察：红车前方还剩哪些障碍？`;
+  }
+  renderEscape();
+}
+
+const SORT_ITEMS = [
+  { value: 12, zone: "both" }, { value: 8, zone: "even" }, { value: 9, zone: "three" }, { value: 7, zone: "neither" },
+  { value: 18, zone: "both" }, { value: 10, zone: "even" }, { value: 21, zone: "three" }, { value: 25, zone: "neither" }
+];
+
+function resetSort() {
+  sortState = { selected: null, placed: {} };
+  renderSort();
+}
+
+function renderSort() {
+  const unplaced = SORT_ITEMS.filter((item) => !sortState.placed[item.value]);
+  const zones = [
+    ["both", "既是偶数，也是 3 的倍数"], ["even", "只是偶数"], ["three", "只是 3 的倍数"], ["neither", "两个条件都不满足"]
+  ];
+  const zoneMarkup = zones.map(([id, label]) => `<button type="button" class="sort-zone" data-zone="${id}"><strong>${label}</strong><span class="placed-chips">${SORT_ITEMS.filter((item) => sortState.placed[item.value] === id).map((item) => `<i>${item.value}</i>`).join("")}</span></button>`).join("");
+  $("#labGameArea").innerHTML = `<p class="lab-instruction">先选择一个数字，再选择它应该进入的区域。</p><div class="sort-rules"><span>条件 A：偶数</span><span>条件 B：3 的倍数</span></div><div class="sort-tray">${unplaced.map((item) => `<button type="button" class="number-chip ${sortState.selected === item.value ? "selected" : ""}" data-number="${item.value}">${item.value}</button>`).join("") || "全部数字已分类"}</div><div class="sort-zones">${zoneMarkup}</div>`;
+  $$("[data-number]").forEach((button) => button.addEventListener("click", () => { sortState.selected = Number(button.dataset.number); $("#labStatus").textContent = `已选择 ${button.dataset.number}，现在判断它满足哪几个条件。`; renderSort(); }));
+  $$("[data-zone]").forEach((button) => button.addEventListener("click", () => placeSortItem(button.dataset.zone)));
+}
+
+function placeSortItem(zone) {
+  if (sortState.selected === null) {
+    $("#labStatus").textContent = "请先从上方选择一个数字。";
+    return;
+  }
+  const item = SORT_ITEMS.find((candidate) => candidate.value === sortState.selected);
+  if (item.zone !== zone) {
+    $("#labStatus").textContent = `${item.value} 还不属于这里。分别检查“偶数”和“3 的倍数”两个条件。`;
+    return;
+  }
+  sortState.placed[item.value] = zone;
+  sortState.selected = null;
+  const finished = Object.keys(sortState.placed).length === SORT_ITEMS.length;
+  if (finished) completeLab("code", "分类完成！策略工具：把两个条件分别判断，再组合成四种可能。只有一个条件也不能漏。 ");
+  else $("#labStatus").textContent = "放对了。继续选择下一个数字。";
+  renderSort();
+}
+
+function resetNim() {
+  nimState = { remaining: 15, turn: "player", finished: false, version: Date.now() };
+  renderNim();
+}
+
+function renderNim() {
+  const stones = Array.from({ length: nimState.remaining }, () => '<i class="energy-stone"></i>').join("");
+  $("#labGameArea").innerHTML = `<div class="nim-layout"><p class="lab-instruction">你和研究机器人轮流拿走 <strong>1、2 或 3 颗</strong>。拿到最后一颗的人获胜。</p><div class="nim-stones" aria-label="还剩 ${nimState.remaining} 颗能量石">${stones}</div><div class="nim-turn"><i></i>${nimState.finished ? "本局结束" : nimState.turn === "player" ? "轮到你" : "机器人正在思考"} · 剩余 ${nimState.remaining} 颗</div><div class="nim-actions">${[1,2,3].map((count) => `<button type="button" data-take="${count}" ${nimState.finished || nimState.turn !== "player" || count > nimState.remaining ? "disabled" : ""}>拿 ${count} 颗</button>`).join("")}</div></div>`;
+  $$("[data-take]").forEach((button) => button.addEventListener("click", () => playerTake(Number(button.dataset.take))));
+}
+
+function playerTake(count) {
+  if (nimState.finished || nimState.turn !== "player" || count > nimState.remaining) return;
+  nimState.remaining -= count;
+  if (nimState.remaining === 0) {
+    nimState.finished = true;
+    completeLab("route", "你拿到了最后一颗！策略工具：从结局倒推，主动把 4 的倍数留给对手。");
+    renderNim();
+    return;
+  }
+  nimState.turn = "robot";
+  $("#labStatus").textContent = `你拿走了 ${count} 颗。机器人正在寻找下一步……`;
+  renderNim();
+  const version = nimState.version;
+  setTimeout(() => robotTake(version), 480);
+}
+
+function robotTake(version) {
+  if (!nimState || nimState.version !== version || nimState.finished || nimState.turn !== "robot") return;
+  let count = nimState.remaining % 4;
+  if (count === 0) count = 1;
+  count = Math.min(count, 3, nimState.remaining);
+  nimState.remaining -= count;
+  if (nimState.remaining === 0) {
+    nimState.finished = true;
+    $("#labStatus").textContent = `机器人拿走 ${count} 颗并赢得本局。别急，观察它每次想留给你的数量，再试一次。`;
+  } else {
+    nimState.turn = "player";
+    $("#labStatus").textContent = `机器人拿走了 ${count} 颗。轮到你，试着把 4 的倍数留给它。`;
+  }
+  renderNim();
+}
+
 $("#ageButton").addEventListener("click", () => ageDialog.showModal());
 $$(".age-options button").forEach((button) => button.addEventListener("click", () => {
   state.age = Number(button.dataset.age);
@@ -211,7 +390,13 @@ $$(".mission-card").forEach((card) => {
     openMission(card.dataset.mission);
   });
 });
+$$(".lab-card").forEach((card) => {
+  card.querySelector("button").addEventListener("click", () => openLab(card.dataset.lab));
+});
 $("#gameClose").addEventListener("click", () => gameDialog.close());
+$("#labClose").addEventListener("click", () => labDialog.close());
+$("#labReset").addEventListener("click", resetLab);
+$("#labHint").addEventListener("click", () => { $("#labStatus").textContent = LAB_META[state.currentLab].hint; });
 $("#hintButton").addEventListener("click", showHint);
 $("#nextButton").onclick = nextQuestion;
 
